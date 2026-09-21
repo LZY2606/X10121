@@ -1,0 +1,17 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+description = "帧解析实验室：协议描述 + 字节流的浏览器帧解析工作台"
+
+[lib]
+name = "frame_lab"
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
