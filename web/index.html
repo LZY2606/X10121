@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>帧解析实验室</title>
+<style>
+:root {
+  --bg: #0f1420; --panel: #171e2e; --panel2: #1e2740; --line: #2b3654;
+  --text: #e7ecf7; --muted: #93a0bd; --accent: #5cc8ff; --ok: #54d18c;
+  --warn: #f2c14e; --err: #ff6b6b; --hl: #2e6da4; --hl2: #ffd166;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+header {
+  padding: 10px 18px; background: linear-gradient(90deg,#13203a,#0f1420);
+  border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 14px;
+}
+header h1 { font-size: 18px; margin: 0; letter-spacing: 1px; }
+header .sub { color: var(--muted); font-size: 12px; }
+.layout { display: grid; grid-template-columns: 300px 1fr 1fr; gap: 10px; padding: 10px; height: calc(100vh - 51px); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
+.panel h2 { font-size: 13px; margin: 0; padding: 9px 12px; color: var(--accent); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.pad { padding: 10px 12px; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+button, select, input[type=text], textarea {
+  background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 5px; padding: 5px 9px; font-size: 13px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: #1d4f73; border-color: #2f7bb0; }
+textarea { width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.muted { color: var(--muted); font-size: 12px; }
+.tree { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.tnode { padding: 1px 6px; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+.tnode:hover { background: #202c49; }
+.tnode.sel { background: var(--hl); color: #fff; }
+.tnode.recomputed { box-shadow: inset 3px 0 0 var(--hl2); }
+.tnode.absent { opacity: .45; }
+.tnode .k { color: var(--muted); }
+.tnode .v { color: #8fd3a8; }
+.tnode .rg { color: #7aa2d8; }
+.twarn > .line { color: var(--warn); }
+.terr > .line { color: var(--err); }
+.bytes { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.brow { display: flex; gap: 4px; padding: 1px 0; align-items: center; }
+.boff { color: var(--muted); width: 60px; text-align: right; flex: none; }
+.bbyte { width: 24px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; flex: none; }
+.bbyte:hover { background: #29405f; }
+.bbyte.hl { background: var(--hl); color: #fff; }
+.bbyte.dim { opacity: .35; }
+.bbyte.bad { outline: 1px solid var(--err); }
+.status-pill { padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-complete { background: rgba(84,209,140,.18); color: var(--ok); }
+.status-incomplete { background: rgba(242,193,78,.18); color: var(--warn); }
+.status-error { background: rgba(255,107,107,.18); color: var(--err); }
+.diag { border-left: 3px solid var(--line); padding: 5px 9px; margin: 6px 0; font-size: 12.5px; background: var(--panel2); border-radius: 0 5px 5px 0; }
+.diag.error { border-color: var(--err); }
+.diag.warning { border-color: var(--warn); }
+.diag.incomplete { border-color: var(--warn); }
+.diag .path { font-family: ui-monospace, Menlo, monospace; color: #9ec6f0; }
+.scroll-y { overflow-y: auto; }
+.list-item { padding: 7px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.list-item:hover { background: #1b2740; }
+.list-item.active { background: #20344f; }
+.tag { font-size: 11px; padding: 0 6px; border-radius: 8px; background: #2a3a5c; color: #bcd; }
+.flex { display: flex; gap: 6px; }
+.flex > * { flex: 1; }
+.hex-input { height: 90px; }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #20304d; border: 1px solid var(--line); padding: 8px 16px; border-radius: 6px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.hexedit { width: 100%; }
+label.chk { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>帧解析实验室</h1>
+  <span class="sub">字节 ↔ 解析树 · 不可变协议版本 · 会话回放</span>
+  <span style="flex:1"></span>
+  <span id="statusPill" class="status-pill status-complete">—</span>
+</header>
+
+<div class="layout">
+  <div class="panel scroll-y">
+    <h2>协议与会话</h2>
+    <div class="pad">
+      <div class="row">
+        <label class="chk">协议版本
+          <select id="versionSelect" style="flex:1"></select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="newVersionBtn" class="primary">编辑/保存版本</button>
+      </div>
+      <div id="editorArea" style="display:none">
+        <textarea id="specEditor" rows="14" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:6px">
+          <button id="validateBtn">校验</button>
+          <button id="saveVersionBtn" class="primary">保存为新版本</button>
+          <button id="cancelEditBtn">取消</button>
+        </div>
+        <div id="specMsg" class="muted"></div>
+      </div>
+      <hr style="border-color:var(--line)">
+      <div class="muted" style="margin:6px 0">会话（点击回放）</div>
+      <div id="sessionList"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="exportBtn">导出当前会话</button>
+        <button id="importBtn">导入会话包</button>
+      </div>
+      <textarea id="importBox" rows="5" placeholder="粘贴导出的 JSON 会话包" style="display:none"></textarea>
+    </div>
+  </div>
+
+  <div class="panel scroll-y">
+    <h2>解析树（点击节点高亮字节）</h2>
+    <div class="pad">
+      <div class="row">
+        <button id="expandBtn">全部展开</button>
+        <button id="collapseBtn">折叠</button>
+        <button id="reparseBtn" class="primary">修改后重新解析</button>
+        <label class="chb"><input type="checkbox" id="autoReparse" checked> 自动重解析</label>
+      </div>
+      <div id="tree" class="tree"></div>
+      <h2 style="margin-top:14px">诊断</h2>
+      <div id="diagnostics"></div>
+      <div class="pad" style="padding-left:0">
+        <div class="muted">备注：</div>
+        <textarea id="noteBox" rows="2"></textarea>
+        <div class="row" style="margin-top:6px"><button id="saveNoteBtn">保存备注</button><button id="saveSessionBtn">另存为新会话</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel scroll-y">
+    <h2>字节覆盖区间</h2>
+    <div class="pad">
+      <div class="row">
+        <textarea id="hexInput" class="hex-input" spellcheck="false" placeholder="粘贴十六进制字节流，例如 a5 01 00 07 ..."></textarea>
+      </div>
+      <div class="row">
+        <button id="loadHexBtn" class="primary">导入样本</button>
+        <button id="encodeBtn">编码器生成合法帧</button>
+      </div>
+      <div id="bytePanel" class="bytes"></div>
+      <div class="muted" id="selInfo" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
