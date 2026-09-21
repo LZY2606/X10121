@@ -1,0 +1,11 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+description = "帧解析实验室：协议版本化、字节级解析树、incomplete/error 区分、会话回放与导入导出"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[dependencies]
