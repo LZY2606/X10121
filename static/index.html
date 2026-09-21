@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>帧解析实验室</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>帧解析实验室</h1>
+  <div class="meta">
+    <span id="outcome-badge" class="badge">—</span>
+    <span id="need-hint" class="hint"></span>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="left-panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="protocols">协议版本</button>
+      <button class="tab" data-tab="sessions">会话</button>
+    </div>
+
+    <div class="tab-body" id="tab-protocols">
+      <div class="row">
+        <select id="version-select" size="6"></select>
+      </div>
+      <div class="row">
+        <label>协议描述（JSON，保存后生成不可变版本）</label>
+        <textarea id="spec-editor" spellcheck="false"></textarea>
+      </div>
+      <div class="row buttons">
+        <button id="btn-save-version">保存版本</button>
+        <button id="btn-load-demo">载入演示协议</button>
+        <button id="btn-load-tlv">载入 TLV 协议</button>
+      </div>
+      <div class="row">
+        <span id="version-id" class="mono small"></span>
+      </div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-sessions">
+      <div class="row buttons">
+        <button id="btn-export">导出当前会话包</button>
+        <label class="file-btn">
+          导入会话包
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </label>
+      </div>
+      <div class="row">
+        <label>备注（独立保存）</label>
+        <textarea id="note" spellcheck="false"></textarea>
+      </div>
+      <ul id="session-list"></ul>
+    </div>
+  </section>
+
+  <section class="panel" id="center-panel">
+    <div class="row">
+      <label>十六进制字节流（可粘贴/编辑，改动后自动重解析）</label>
+      <textarea id="hex-input" spellcheck="false"></textarea>
+    </div>
+    <div class="row buttons">
+      <button id="btn-reparse">重新解析</button>
+      <button id="btn-save-session">存为会话</button>
+      <button id="btn-sample">填入示例帧</button>
+      <span id="reparse-info" class="hint"></span>
+    </div>
+    <div class="row">
+      <label>字节覆盖区（点选树节点高亮）</label>
+      <div id="hex-view" class="hex-view mono"></div>
+      <div class="legend">
+        <span class="sw ok"></span>正常
+        <span class="sw inc"></span>未完整/告警
+        <span class="sw vio"></span>违规
+        <span class="sw sel"></span>选中
+      </div>
+    </div>
+    <div class="row">
+      <label>诊断</label>
+      <ul id="diagnostics"></ul>
+    </div>
+  </section>
+
+  <section class="panel" id="right-panel">
+    <div class="row">
+      <label>解析树（单步展开）</label>
+      <div class="buttons">
+        <button id="btn-expand">展开一层</button>
+        <button id="btn-collapse">全部折叠</button>
+      </div>
+      <ul id="tree" class="tree"></ul>
+    </div>
+    <div class="row">
+      <label>选中字段</label>
+      <div id="selection" class="mono small"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

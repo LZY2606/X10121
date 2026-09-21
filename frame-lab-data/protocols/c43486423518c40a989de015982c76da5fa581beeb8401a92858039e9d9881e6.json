@@ -1,0 +1,63 @@
+{
+  "created_at": 1790019972,
+  "name": "递归 TLV 树",
+  "spec": {
+    "max_depth": 4,
+    "name": "递归 TLV 树",
+    "root": "tlv",
+    "structs": {
+      "tlv": {
+        "fields": [
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "tag",
+            "signed": false,
+            "width": 1
+          },
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "len",
+            "signed": false,
+            "width": 1
+          },
+          {
+            "cases": {
+              "1": {
+                "fields": [
+                  {
+                    "bounded": {
+                      "field": "len",
+                      "kind": "field"
+                    },
+                    "element": {
+                      "kind": "struct",
+                      "name": "child",
+                      "ty": "tlv"
+                    },
+                    "kind": "vector",
+                    "name": "children"
+                  }
+                ]
+              }
+            },
+            "fallback": {
+              "fields": [
+                {
+                  "kind": "payload",
+                  "length_field": "len",
+                  "name": "value"
+                }
+              ]
+            },
+            "kind": "switch",
+            "name": "content",
+            "on": "tag"
+          }
+        ]
+      }
+    }
+  },
+  "version_id": "c43486423518c40a989de015982c76da5fa581beeb8401a92858039e9d9881e6"
+}

@@ -1,0 +1,120 @@
+{
+  "created_at": 1790019972,
+  "name": "演示帧 v1",
+  "spec": {
+    "max_depth": 8,
+    "name": "演示帧 v1",
+    "root": "frame",
+    "structs": {
+      "frame": {
+        "fields": [
+          {
+            "endian": "be",
+            "expect": 48813,
+            "kind": "int",
+            "name": "magic",
+            "signed": false,
+            "width": 2
+          },
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "type",
+            "signed": false,
+            "width": 1
+          },
+          {
+            "endian": "le",
+            "kind": "int",
+            "name": "seq",
+            "signed": false,
+            "width": 2
+          },
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "len",
+            "signed": false,
+            "width": 2
+          },
+          {
+            "kind": "payload",
+            "length_field": "len",
+            "name": "body"
+          },
+          {
+            "cases": {
+              "1": {
+                "fields": [
+                  {
+                    "endian": "be",
+                    "kind": "int",
+                    "name": "code",
+                    "signed": false,
+                    "width": 1
+                  },
+                  {
+                    "endian": "be",
+                    "kind": "int",
+                    "name": "mask",
+                    "signed": false,
+                    "width": 1
+                  }
+                ]
+              },
+              "2": {
+                "fields": [
+                  {
+                    "kind": "struct",
+                    "length": 3,
+                    "name": "meta",
+                    "ty": "meta_t"
+                  }
+                ]
+              }
+            },
+            "fallback": {
+              "fields": []
+            },
+            "kind": "switch",
+            "name": "tail",
+            "on": "type"
+          },
+          {
+            "algorithm": "crc32",
+            "endian": "be",
+            "kind": "checksum",
+            "name": "crc",
+            "width": 4
+          }
+        ]
+      },
+      "meta_t": {
+        "fields": [
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "ver",
+            "signed": false,
+            "width": 1
+          },
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "flags",
+            "signed": false,
+            "width": 1
+          },
+          {
+            "endian": "be",
+            "kind": "int",
+            "name": "idx",
+            "signed": false,
+            "width": 1
+          }
+        ]
+      }
+    }
+  },
+  "version_id": "a97fd7c342c4a4979ae50409c3424ccf07818d33a14f237beb22e33622b030bb"
+}

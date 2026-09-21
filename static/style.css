@@ -1,0 +1,113 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif;
+  background: #f4f6fa;
+  color: #1f2733;
+  font-size: 13px;
+}
+header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 18px; background: #1f2a44; color: #fff;
+}
+header h1 { font-size: 17px; margin: 0; }
+.badge {
+  padding: 3px 10px; border-radius: 12px; font-size: 12px;
+  background: #5b6b8c; color: #fff;
+}
+.badge.complete { background: #2e9e5b; }
+.badge.incomplete { background: #d98a1f; }
+.badge.violation { background: #c93f3f; }
+.hint { color: #6b7484; font-size: 12px; }
+header .hint { color: #c7cfdd; }
+
+main {
+  display: grid;
+  grid-template-columns: 360px 1fr 380px;
+  gap: 12px; padding: 12px;
+  height: calc(100vh - 52px);
+}
+.panel {
+  background: #fff; border: 1px solid #dde3ec; border-radius: 8px;
+  padding: 12px; overflow: auto;
+}
+.row { margin-bottom: 12px; }
+.row label { display: block; font-weight: 600; margin-bottom: 5px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.tab {
+  flex: 1; padding: 6px; border: 1px solid #c8d0dd; background: #eef2f8;
+  border-radius: 6px; cursor: pointer;
+}
+.tab.active { background: #1f2a44; color: #fff; border-color: #1f2a44; }
+.tab-body.hidden { display: none; }
+
+textarea, select {
+  width: 100%; border: 1px solid #c8d0dd; border-radius: 6px;
+  padding: 7px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+textarea { resize: vertical; }
+#spec-editor { height: 260px; }
+#note { height: 70px; }
+#hex-input { height: 110px; }
+select { font-family: inherit; }
+button, .file-btn {
+  border: 1px solid #1f2a44; background: #1f2a44; color: #fff;
+  padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+}
+button:hover, .file-btn:hover { background: #33415f; }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.small { font-size: 11px; color: #5b6472; word-break: break-all; }
+
+ul { list-style: none; margin: 0; padding: 0; }
+#session-list li {
+  padding: 7px 8px; border: 1px solid #e3e8f0; border-radius: 6px;
+  margin-bottom: 6px; cursor: pointer;
+}
+#session-list li:hover { background: #eef3fb; }
+#session-list .sid { color: #8a93a3; font-size: 10px; }
+
+.tree li { margin: 2px 0; }
+.tree .node {
+  cursor: pointer; padding: 3px 6px; border-radius: 5px;
+  display: flex; gap: 8px; align-items: baseline;
+}
+.tree .node:hover { background: #eef3fb; }
+.tree .node.selected { background: #d7e4fb; outline: 1px solid #7d9fd6; }
+.tree .toggle { width: 14px; display: inline-block; color: #5b6472; cursor: pointer; }
+.tree .kind { color: #8a93a3; font-size: 11px; }
+.tree .range { color: #5b6472; font-size: 11px; }
+.tree .value { color: #234; }
+.tree .n-children { padding-left: 18px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.ok { background: #2e9e5b; }
+.dot.incomplete { background: #d98a1f; }
+.dot.violation { background: #c93f3f; }
+.recalc { outline: 1px dashed #d98a1f; background: #fdf3e2; }
+
+.hex-view {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.7; border: 1px solid #e3e8f0;
+  border-radius: 6px; padding: 8px; min-height: 90px; max-height: 220px;
+  overflow: auto; white-space: pre;
+}
+.hex-view .byte { padding: 0 2px; border-radius: 3px; cursor: pointer; }
+.hex-view .byte.ok { background: #e6f4ec; }
+.hex-view .byte.inc { background: #fcefd7; }
+.hex-view .byte.vio { background: #f8dede; }
+.hex-view .byte.selected { background: #7d9fd6; color: #fff; }
+.hex-view .addr { color: #9aa2af; margin-right: 10px; user-select: none; }
+.legend { margin-top: 6px; font-size: 11px; color: #5b6472; }
+.legend .sw {
+  display: inline-block; width: 11px; height: 11px; border-radius: 3px;
+  margin: 0 4px 0 10px; vertical-align: -1px;
+}
+.legend .ok { background: #e6f4ec; border: 1px solid #2e9e5b; }
+.legend .inc { background: #fcefd7; border: 1px solid #d98a1f; }
+.legend .vio { background: #f8dede; border: 1px solid #c93f3f; }
+.legend .sel { background: #7d9fd6; }
+
+#diagnostics li { padding: 4px 6px; border-radius: 5px; margin-bottom: 4px; }
+#diagnostics .warning { background: #fcefd7; }
+#diagnostics .error { background: #f8dede; }

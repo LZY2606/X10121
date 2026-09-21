@@ -1,0 +1,14 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[lib]
+name = "framelab"
+path = "src/lib.rs"
+
+[dependencies]
