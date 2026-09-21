@@ -1,0 +1,26 @@
+{
+  "name": "demo-frame",
+  "root": "Frame",
+  "max_depth": 8,
+  "structs": {
+    "Frame": [
+      {"name": "magic", "type": "uint", "width": 2, "endian": "big", "const": 42245},
+      {"name": "version", "type": "uint", "width": 1},
+      {"name": "type", "type": "uint", "width": 1},
+      {"name": "len", "type": "uint", "width": 1},
+      {"name": "head", "type": "struct", "ref": "Header", "length": 2},
+      {"name": "payload", "type": "bytes", "length": {"field": "len", "bias": -2}},
+      {"name": "options", "type": "when", "field": "type", "equals": 1,
+        "fields": [
+          {"name": "trailer", "type": "uint", "width": 1}
+        ]
+      },
+      {"name": "crc", "type": "checksum", "algo": "sum8",
+        "cover": [{"start": "magic", "end": "payload"}]}
+    ],
+    "Header": [
+      {"name": "kind", "type": "uint", "width": 1},
+      {"name": "seq", "type": "uint", "width": 1}
+    ]
+  }
+}

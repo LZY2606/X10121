@@ -1,0 +1,16 @@
+[package]
+name = "frame_lab"
+version = "0.1.0"
+edition = "2021"
+description = "帧解析实验室：版本化协议描述 + 字节映射解析 + 会话回放"
+
+[lib]
+name = "frame_lab"
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame_lab"
+path = "src/main.rs"
+
+[profile.release]
+panic = "abort"

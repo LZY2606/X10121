@@ -1,0 +1,22 @@
+{
+  "name": "nested-list",
+  "root": "List",
+  "max_depth": 5,
+  "structs": {
+    "List": [
+      {"name": "count", "type": "uint", "width": 1},
+      {"name": "items", "type": "array", "count": {"field": "count"},
+        "item": {"name": "node", "type": "struct", "ref": "Node"}}
+    ],
+    "Node": [
+      {"name": "tag", "type": "uint", "width": 1},
+      {"name": "len", "type": "uint", "width": 1},
+      {"name": "data", "type": "bytes", "length": {"field": "len"}},
+      {"name": "child", "type": "when", "field": "tag", "mask": 1, "equals": 1,
+        "fields": [
+          {"name": "next", "type": "ref", "to": "Node"}
+        ]
+      }
+    ]
+  }
+}
