@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>帧解析实验室</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #171d2c;
+    --panel2: #1d2536;
+    --line: #2a3349;
+    --text: #dce3f1;
+    --muted: #8b96ad;
+    --accent: #5aa9ff;
+    --ok: #4cc38a;
+    --warn: #e8b341;
+    --err: #ef6b6b;
+    --absent: #6b7280;
+    --hl: rgba(90, 169, 255, 0.28);
+    --recompute: rgba(232, 179, 65, 0.30);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #18203300, #18203300), var(--panel);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: 1px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .spacer { flex: 1; }
+  .wrap { flex: 1; display: grid; grid-template-columns: 360px 1fr 380px; min-height: 0; }
+  .col { overflow: auto; padding: 12px; border-right: 1px solid var(--line); }
+  .col:last-child { border-right: none; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
+  section > h2 {
+    margin: 0; padding: 8px 12px; font-size: 13px; color: var(--muted);
+    border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px;
+  }
+  section .body { padding: 10px 12px; }
+  textarea, input[type=text], select {
+    width: 100%; background: #0c111c; color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+  }
+  textarea { min-height: 220px; resize: vertical; line-height: 1.45; }
+  input[type=text] { margin: 4px 0; }
+  button {
+    background: #243049; color: var(--text); border: 1px solid #34415f;
+    border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 12px; margin: 3px 4px 3px 0;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: #1f4e8c; border-color: #2f6fc0; }
+  button.danger { background: #5a2a2a; border-color: #8a3a3a; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .muted { color: var(--muted); }
+  .pill { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line); }
+  .pill.ok { color: var(--ok); border-color: #2f5a45; }
+  .pill.warning { color: var(--warn); border-color: #6a5524; }
+  .pill.error { color: var(--err); border-color: #6a3030; }
+  .pill.absent { color: var(--absent); }
+  ul.list { list-style: none; padding: 0; margin: 0; }
+  ul.list li { padding: 6px 8px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  ul.list li:hover { background: var(--panel2); }
+  ul.list li.active { background: #22324c; }
+  .bytes {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12.5px;
+  }
+  .byte-grid { display: flex; flex-wrap: wrap; gap: 2px; }
+  .byte {
+    width: 25px; height: 23px; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; border-radius: 4px; cursor: pointer; user-select: none;
+  }
+  .byte:hover { border-color: var(--accent); }
+  .byte.hl { background: var(--hl); border-color: var(--accent); }
+  .byte.changed { outline: 1px dashed var(--warn); }
+  .byte.recompute { background: var(--recompute); }
+  .offset-line { color: var(--muted); white-space: pre; }
+  .tree { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .tnode { padding: 1px 4px; border-radius: 4px; cursor: pointer; white-space: pre-wrap; }
+  .tnode:hover { background: var(--panel2); }
+  .tnode.sel { background: #23415f; }
+  .tnode .twisty { color: var(--muted); display: inline-block; width: 14px; }
+  .tnode .range { color: var(--muted); margin-left: 8px; }
+  .tnode.recomputed { background: var(--recompute); }
+  .diag { margin: 4px 0; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--line); background: #0c111c; white-space: pre-wrap; }
+  .diag.error { border-color: #6a3030; color: #ffb4b4; }
+  .diag.warning { border-color: #6a5524; color: #ffd98a; }
+  .diag.ok { border-color: #2f5a45; color: #a6f0cb; }
+  .path { color: var(--accent); }
+  .grow { flex: 1; }
+  .small { font-size: 11px; }
+  .toast { position: fixed; right: 14px; bottom: 14px; max-width: 420px; z-index: 30; }
+  .toast .t { margin-top: 8px; padding: 8px 12px; border-radius: 6px; background: #20304c; border: 1px solid #34415f; }
+  .toast .t.err { border-color: #8a3a3a; }
+  .toast .t.ok { border-color: #2f5a45; }
+  pre.code { background: #0c111c; border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 260px; overflow: auto; }
+  .legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:11px; color: var(--muted);}
+  .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>帧解析实验室</h1>
+  <span class="sub">版本化协议描述 · 字节↔解析树映射 · 可回放会话</span>
+  <span class="spacer"></span>
+  <span id="globalStatus" class="pill">未加载</span>
+</header>
+<div class="wrap">
+  <!-- 左：协议与版本 -->
+  <div class="col" id="leftCol">
+    <section>
+      <h2>协议描述 <button class="grow" style="margin:0;visibility:hidden"></button>
+        <button id="btnLoadDemo">载入示例协议</button></h2>
+      <div class="body">
+        <textarea id="specEditor" spellcheck="false"></textarea>
+        <div class="row">
+          <button class="primary" id="btnValidate">校验</button>
+          <button class="primary" id="btnSaveVersion">保存为不可变版本</button>
+        </div>
+        <div id="specMsg" class="small muted" style="margin-top:6px"></div>
+      </div>
+    </section>
+    <section>
+      <h2>协议版本（不可变）</h2>
+      <div class="body">
+        <ul class="list" id="versionList"></ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- 中：字节 + 解析树 -->
+  <div class="col">
+    <section>
+      <h2>十六进制字节流
+        <span class="grow"></span>
+        <button id="btnParse">解析</button>
+        <button id="btnEncode">用当前值生成合法帧</button>
+      </h2>
+      <div class="body">
+        <textarea id="hexInput" spellcheck="false" placeholder="例如：a1 0d 00 05 68 65 6c 6c 6f ..." style="min-height:84px"></textarea>
+        <div class="row">
+          <button id="btnFlip0">首字节 -1</button>
+          <button id="btnTruncate1">截断 1 字节</button>
+          <button id="btnCorruptOne">破坏一个字节</button>
+          <span class="muted small">点击字节可直接编辑（00-ff），编辑后会自动重新解析。</span>
+        </div>
+        <div class="bytes" id="byteView" style="margin-top:10px"></div>
+        <div class="legend">
+          <span><span class="sw" style="background:var(--hl)"></span>选中节点覆盖</span>
+          <span><span class="sw" style="background:var(--recompute)"></span>本次重算</span>
+          <span><span class="sw" style="outline:1px dashed var(--warn)"></span>被修改字节</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>解析树（点击节点展开并高亮字节）
+        <span class="grow"></span>
+        <button id="btnExpandAll">全部展开</button>
+        <button id="btnCollapseAll">全部折叠</button>
+      </h2>
+      <div class="body">
+        <div id="treeView" class="tree"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 右：诊断 + 会话 -->
+  <div class="col">
+    <section>
+      <h2>诊断</h2>
+      <div class="body" id="diagView"><div class="muted">尚未解析。</div></div>
+    </section>
+    <section>
+      <h2>会话</h2>
+      <div class="body">
+        <input type="text" id="sessionName" placeholder="会话名称" />
+        <textarea id="sessionNote" placeholder="备注（与其它会话独立）" style="min-height:60px"></textarea>
+        <div class="row">
+          <button class="primary" id="btnSaveSession">保存当前为会话</button>
+          <button id="btnUpdateNote">更新名称/备注</button>
+        </div>
+        <div class="row">
+          <button id="btnExport">导出会话包</button>
+          <button id="btnImport">导入会话包</button>
+          <input type="file" id="importFile" accept="application/json,.json" style="display:none" />
+        </div>
+        <pre class="code" id="exportBox" style="display:none"></pre>
+        <ul class="list" id="sessionList" style="margin-top:8px"></ul>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const state = {
+  versions: [],
+  sessions: [],
+  selectedVersion: null,
+  bytes: [],
+  changedBytes: new Set(),
+  parseResult: null,
+  selectedNode: null,
+  expanded: new Set([""]),
+  lastNodeKey: new Map(),
+  recomputeStamp: 0,
+  currentSession: null,
+  lastExport: null,
+};
+
+const $ = (id) => document.getElementById(id);
+
+function toast(msg, kind) {
+  const box = $("toast");
+  const el = document.createElement("div");
+  el.className = "t " + (kind || "");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), 3600);
+}
+
+async function api(path, body) {
+  const resp = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  let v = null;
+  try { v = await resp.json(); } catch (_) { }
+  if (!resp.ok || !v || v.ok === false) {
+    throw new Error((v && v.error) || ("HTTP " + resp.status));
+  }
+  return v;
+}
+
+function toHex(bytes) {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" ");
+}
+function parseHex(text) {
+  const cleaned = text.replace(/0x/gi, "").replace(/[^0-9a-fA-F]/g, "");
+  if (cleaned.length % 2 !== 0) throw new Error("十六进制长度必须是偶数");
+  const out = [];
+  for (let i = 0; i < cleaned.length; i += 2) out.push(parseInt(cleaned.slice(i, i + 2), 16));
+  return out;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function shortId(id) { return id ? id.slice(0, 12) + "…" : ""; }
+const DEMO_SPEC = {
+  name: "demo-envelope",
+  endian: "big",
+  max_depth: 6,
+  max_frame: 4096,
+  root: "frame",
+  structs: {
+    frame: [
+      { name: "magic", type: "int", bytes: 1, enum: { SYNC: 161 } },
+      { name: "type", type: "int", bytes: 1, enum: { DATA: 1, ACK: 2, TLV: 3 } },
+      { name: "payload_len", type: "int", bytes: 2 },
+      { name: "payload", type: "bytes", length: "$payload_len" },
+      {
+        name: "crc", type: "int", bytes: 1,
+        checksum: { algo: "sum8", skip: ["crc"] }
+      }
+    ],
+    item: [
+      { name: "tag", type: "int", bytes: 1 },
+      { name: "len", type: "int", bytes: 1 },
+      { name: "value", type: "bytes", length: "$len" }
+    ]
+  }
+};
+
+$("btnLoadDemo").onclick = () => {
+  $("specEditor").value = JSON.stringify(DEMO_SPEC, null, 2);
+  $("specMsg").textContent = "已载入示例：可在文本框里修改后“保存为不可变版本”。";
+};
+
+$("btnValidate").onclick = async () => {
+  try {
+    const spec = JSON.parse($("specEditor").value);
+    const r = await api("/api/protocols/validate", { spec });
+    if (r.valid) {
+      $("specMsg").textContent = `校验通过：root=${r.root}（保存时才会生成不可变版本）`;
+      toast("协议描述校验通过", "ok");
+    } else {
+      $("specMsg").textContent = "校验失败：" + r.error;
+      toast("协议描述校验失败", "err");
+    }
+  } catch (e) {
+    $("specMsg").textContent = "JSON 解析失败：" + e.message;
+  }
+};
+
+$("btnSaveVersion").onclick = async () => {
+  try {
+    const spec = JSON.parse($("specEditor").value);
+    const r = await api("/api/protocols/save", { spec });
+    toast("已保存版本 " + shortId(r.version_id), "ok");
+    await refreshState(true);
+    selectVersion(r.version_id);
+  } catch (e) { toast(e.message, "err"); }
+};
+
+async function refreshState(keepVersion) {
+  const s = await api("/api/state", {});
+  state.versions = s.protocols || [];
+  state.sessions = s.sessions || [];
+  if (!keepVersion || !state.selectedVersion) {
+    state.selectedVersion = state.versions.length
+      ? state.versions[state.versions.length - 1].version_id
+      : null;
+  }
+  renderVersions();
+  renderSessions();
+  updateGlobalStatus();
+}
+
+function renderVersions() {
+  const ul = $("versionList");
+  ul.innerHTML = "";
+  if (!state.versions.length) {
+    ul.innerHTML = '<li class="muted">还没有版本。保存第一个不可变版本后开始解析。</li>';
+    return;
+  }
+  for (const v of state.versions) {
+    const li = document.createElement("li");
+    if (v.version_id === state.selectedVersion) li.classList.add("active");
+    li.innerHTML = `<div><b>${escapeHtml(v.name || "(未命名)")}</b>
+      <span class="pill ${v.version_id === state.selectedVersion ? "ok" : ""}">${shortId(v.version_id)}</span></div>
+      <div class="muted small">root=${escapeHtml(v.spec.root)} · ${Object.keys(v.spec.structs || {}).length} 个结构</div>`;
+    li.onclick = () => { selectVersion(v.version_id); $("specEditor").value = JSON.stringify(v.spec, null, 2); };
+    ul.appendChild(li);
+  }
+}
+
+function selectVersion(vid) {
+  state.selectedVersion = vid;
+  const v = state.versions.find((x) => x.version_id === vid);
+  if (v) $("specEditor").value = JSON.stringify(v.spec, null, 2);
+  renderVersions();
+  updateGlobalStatus();
+  if (state.bytes.length) doParse(false);
+}
+
+function updateGlobalStatus() {
+  const el = $("globalStatus");
+  if (!state.selectedVersion) { el.textContent = "未选择版本"; el.className = "pill"; return; }
+  el.textContent = "版本 " + shortId(state.selectedVersion);
+  el.className = "pill ok";
+}
+async function doParse(markAllRecomputed) {
+  if (!state.selectedVersion) { toast("请先选择或保存一个协议版本", "err"); return; }
+  const previous = new Map();
+  if (state.parseResult && state.parseResult.tree) collectNodes(state.parseResult.tree, previous);
+  const hex = toHex(state.bytes);
+  try {
+    const r = await api("/api/parse", { version_id: state.selectedVersion, bytes_hex: hex });
+    state.parseResult = r.result;
+    const now = new Map();
+    if (r.result.tree) collectNodes(r.result.tree, now);
+    state.recomputeNodes = new Set();
+    now.forEach((sig, key) => {
+      if (!previous.has(key) || previous.get(key) !== sig) state.recomputeNodes.add(key);
+    });
+    state.recomputeStamp++;
+    renderBytes();
+    renderTree();
+    renderDiag();
+  } catch (e) {
+    toast("解析请求失败：" + e.message, "err");
+  }
+}
+
+function nodeKey(n) { return n.path.join("/"); }
+function nodeSig(n) {
+  return JSON.stringify({
+    path: n.path, start: n.start, end: n.end, status: n.status,
+    value: n.value, diagnostics: n.diagnostics,
+    childCount: (n.children || []).length,
+  });
+}
+function collectNodes(n, map) {
+  map.set(nodeKey(n), nodeSig(n));
+  (n.children || []).forEach((c) => collectNodes(c, map));
+}
+
+function renderBytes() {
+  const box = $("byteView");
+  box.innerHTML = "";
+  const selected = state.selectedNode;
+  const perRow = 16;
+  for (let row = 0; row < Math.max(1, Math.ceil(state.bytes.length / perRow)); row++) {
+    const off = document.createElement("div");
+    off.className = "offset-line";
+    off.textContent = (row * perRow).toString(16).padStart(4, "0") + ":";
+    const grid = document.createElement("div");
+    grid.className = "byte-grid";
+    for (let i = row * perRow; i < Math.min(state.bytes.length, (row + 1) * perRow); i++) {
+      const b = document.createElement("span");
+      b.className = "byte";
+      b.textContent = state.bytes[i].toString(16).padStart(2, "0");
+      if (selected && i >= selected.start && i < selected.end) b.classList.add("hl");
+      if (state.changedBytes.has(i)) b.classList.add("changed");
+      if (nodeRecomputedAtByte(i)) b.classList.add("recompute");
+      b.onclick = () => editByte(i);
+      b.title = `字节偏移 ${i}（点击编辑）`;
+      grid.appendChild(b);
+    }
+    box.appendChild(off);
+    box.appendChild(grid);
+  }
+}
+
+function nodeRecomputedAtByte(idx) {
+  if (!state.recomputeNodes || !state.parseResult || !state.parseResult.tree) return false;
+  let hit = false;
+  const walk = (n) => {
+    if (hit) return;
+    if (idx >= n.start && idx < n.end && state.recomputeNodes.has(nodeKey(n))) hit = true;
+    (n.children || []).forEach(walk);
+  };
+  walk(state.parseResult.tree);
+  return hit;
+}
+
+async function editByte(i) {
+  const cur = state.bytes[i].toString(16).padStart(2, "0");
+  const next = prompt(`修改偏移 ${i} 的字节（两位十六进制）`, cur);
+  if (next === null) return;
+  const n = parseInt(next.replace(/[^0-9a-fA-F]/g, ""), 16);
+  if (isNaN(n) || n < 0 || n > 255) { toast("需要 00..ff", "err"); return; }
+  state.bytes[i] = n;
+  state.changedBytes.add(i);
+  $("hexInput").value = toHex(state.bytes);
+  await doParse(false);
+}
+
+$("btnParse").onclick = async () => {
+  try {
+    state.bytes = parseHex($("hexInput").value);
+    state.changedBytes = new Set();
+    await doParse(true);
+  } catch (e) { toast(e.message, "err"); }
+};
+
+$("btnTruncate1").onclick = async () => {
+  if (!state.bytes.length) return;
+  state.bytes = state.bytes.slice(0, -1);
+  state.changedBytes = new Set();
+  $("hexInput").value = toHex(state.bytes);
+  await doParse(true);
+};
+$("btnFlip0").onclick = async () => {
+  if (!state.bytes.length) return;
+  state.bytes[0] = (state.bytes[0] + 255) % 256;
+  state.changedBytes = new Set([0]);
+  $("hexInput").value = toHex(state.bytes);
+  await doParse(true);
+};
+$("btnCorruptOne").onclick = async () => {
+  if (!state.bytes.length) return;
+  const i = Math.floor(state.bytes.length / 2);
+  state.bytes[i] ^= 0xff;
+  state.changedBytes = new Set([i]);
+  $("hexInput").value = toHex(state.bytes);
+  await doParse(true);
+};
+function renderTree() {
+  const box = $("treeView");
+  box.innerHTML = "";
+  const r = state.parseResult;
+  if (!r || !r.tree) {
+    box.innerHTML = '<span class="muted">没有可显示的解析树（解析在根字段之前失败）。</span>';
+    return;
+  }
+  box.appendChild(renderNode(r.tree, 0, true));
+}
+
+function renderNode(n, depth, rootOpen) {
+  const wrap = document.createElement("div");
+  const key = nodeKey(n);
+  const open = state.expanded.has(key) || (rootOpen && depth === 0);
+  const hasKids = (n.children || []).length > 0;
+  const row = document.createElement("div");
+  row.className = "tnode";
+  if (state.selectedNode && state.selectedNode.path.join("/") === key) row.classList.add("sel");
+  if (state.recomputeNodes && state.recomputeNodes.has(key)) row.classList.add("recomputed");
+  const twist = hasKids ? (open ? "▾" : "▸") : " ";
+  const statusPill =
+    n.status === "ok" ? '<span class="pill ok">ok</span>'
+    : n.status === "warning" ? '<span class="pill warning">warning</span>'
+    : n.status === "error" ? '<span class="pill error">error</span>'
+    : n.status === "absent" ? '<span class="pill absent">absent</span>' : "";
+  row.style.paddingLeft = (depth * 14 + 4) + "px";
+  row.innerHTML =
+    `<span class="twisty">${twist}</span>${statusPill} ${escapeHtml(n.display)}` +
+    `<span class="range">[${n.start}..${n.end}] ${n.start === n.end ? "" : "(" + (n.end - n.start) + "B)"}</span>`;
+  row.onclick = (e) => {
+    e.stopPropagation();
+    if (hasKids && (e.target.classList.contains("twisty") || e.detail === 0)) {
+      toggle(key);
+    }
+    state.selectedNode = { path: n.path, start: n.start, end: n.end, key };
+    renderTree();
+    renderBytes();
+  };
+  row.ondblclick = () => toggle(key);
+  wrap.appendChild(row);
+  if (open && hasKids) {
+    for (const c of n.children) wrap.appendChild(renderNode(c, depth + 1, false));
+  }
+  return wrap;
+}
+function toggle(key) {
+  if (state.expanded.has(key)) state.expanded.delete(key);
+  else state.expanded.add(key);
+  renderTree();
+}
+$("btnExpandAll").onclick = () => {
+  state.expanded = new Set();
+  const add = (n) => { state.expanded.add(nodeKey(n)); (n.children || []).forEach(add); };
+  if (state.parseResult && state.parseResult.tree) add(state.parseResult.tree);
+  renderTree();
+};
+$("btnCollapseAll").onclick = () => {
+  state.expanded = new Set();
+  renderTree();
+};
+
+function renderDiag() {
+  const box = $("diagView");
+  box.innerHTML = "";
+  const r = state.parseResult;
+  if (!r) { box.innerHTML = '<div class="muted">尚未解析。</div>'; return; }
+
+  if (r.error) {
+    const e = r.error;
+    const d = document.createElement("div");
+    d.className = "diag error";
+    const pathText = e.path.map((p) => escapeHtml(p)).join(" / ");
+    if (e.kind === "incomplete") {
+      d.innerHTML =
+        `<b>输入尚未完整（incomplete）</b><br>` +
+        `最深字段：<span class="path">${pathText}</span>，字节偏移 ${e.offset}<br>` +
+        `至少还需要 <b>${e.still_need}</b> 字节（总长下界 ${e.need_total}，当前 ${r.input_len}）<br>` +
+        `<span class="muted">${escapeHtml(e.message)}</span>`;
+    } else {
+      d.innerHTML =
+        `<b>输入已经违反协议（violation）</b><br>` +
+        `最深字段：<span class="path">${pathText}</span>，字节偏移 ${e.offset}<br>` +
+        `<span class="muted">${escapeHtml(e.message)}</span>`;
+    }
+    box.appendChild(d);
+  } else {
+    const d = document.createElement("div");
+    d.className = "diag ok";
+    d.textContent = `解析成功：消费 ${r.consumed}/${r.input_len} 字节；树摘要 ${r.tree_digest}`;
+    box.appendChild(d);
+  }
+
+  if ((r.warnings || []).length) {
+    for (const w of r.warnings) {
+      const d = document.createElement("div");
+      d.className = "diag warning";
+      d.textContent = "⚠ " + w;
+      box.appendChild(d);
+    }
+  }
+
+  const fieldDiags = [];
+  const walk = (n) => {
+    for (const m of n.diagnostics || []) fieldDiags.push({ path: n.path.join(" / "), m, status: n.status });
+    (n.children || []).forEach(walk);
+  };
+  if (r.tree) walk(r.tree);
+  for (const f of fieldDiags) {
+    const d = document.createElement("div");
+    d.className = "diag " + (f.status === "error" ? "error" : f.status === "warning" ? "warning" : "ok");
+    d.innerHTML = `<span class="path">${escapeHtml(f.path)}</span><br>${escapeHtml(f.m)}`;
+    box.appendChild(d);
+  }
+}
+$("btnEncode").onclick = async () => {
+  if (!state.selectedVersion) { toast("请先选择协议版本", "err"); return; }
+  const text = prompt("输入字段值 JSON（可只填业务字段，长度/计数/校验和自动生成）", JSON.stringify({
+    magic: 161, type: 1, payload: "68656c6c6f"
+  }));
+  if (text === null) return;
+  try {
+    const values = JSON.parse(text);
+    const r = await api("/api/encode", { version_id: state.selectedVersion, values });
+    state.bytes = parseHex(r.bytes_hex);
+    state.changedBytes = new Set();
+    $("hexInput").value = r.bytes_hex;
+    state.parseResult = r.parse;
+    state.recomputeNodes = new Set();
+    renderBytes(); renderTree(); renderDiag();
+    toast(`已生成合法帧（${state.bytes.length} 字节）`, "ok");
+  } catch (e) { toast(e.message, "err"); }
+};
+
+$("btnSaveSession").onclick = async () => {
+  if (!state.selectedVersion) { toast("请先选择协议版本", "err"); return; }
+  if (!state.bytes.length && (!state.parseResult)) { toast("请先导入并解析字节", "err"); return; }
+  const name = $("sessionName").value.trim() || ("会话 " + new Date().toLocaleTimeString());
+  const note = $("sessionNote").value;
+  try {
+    const r = await api("/api/sessions/create", {
+      version_id: state.selectedVersion,
+      bytes_hex: toHex(state.bytes),
+      name, note,
+    });
+    state.currentSession = r.session.session_id;
+    toast("已保存会话 " + shortId(r.session.session_id), "ok");
+    await refreshState(true);
+    highlightSession(state.currentSession);
+  } catch (e) { toast(e.message, "err"); }
+};
+
+$("btnUpdateNote").onclick = async () => {
+  if (!state.currentSession) { toast("请先在下方选择一个会话", "err"); return; }
+  try {
+    await api("/api/sessions/update", {
+      session_id: state.currentSession,
+      name: $("sessionName").value,
+      note: $("sessionNote").value,
+    });
+    toast("名称/备注已更新（会话与其它会话独立）", "ok");
+    await refreshState(true);
+    highlightSession(state.currentSession);
+  } catch (e) { toast(e.message, "err"); }
+};
+
+function renderSessions() {
+  const ul = $("sessionList");
+  ul.innerHTML = "";
+  if (!state.sessions.length) {
+    ul.innerHTML = '<li class="muted">还没有会话。解析后可保存。</li>';
+    return;
+  }
+  for (const s of state.sessions) {
+    const li = document.createElement("li");
+    li.dataset.id = s.session_id;
+    if (s.session_id === state.currentSession) li.classList.add("active");
+    const cls = s.status === "ok" ? "ok" : s.status === "warning" ? "warning" : "error";
+    li.innerHTML =
+      `<div><b>${escapeHtml(s.name || "(未命名)")}</b> <span class="pill ${cls}">${s.status}</span></div>` +
+      `<div class="muted small">${escapeHtml(s.note || "（无备注）")}</div>` +
+      `<div class="muted small">版本 ${shortId(s.version_id)} · blob ${shortId(s.blob_id)} · 摘要 ${shortId(s.tree_digest)}</div>` +
+      `<div class="small" style="margin-top:3px">
+        <a href="#" data-act="load">载入</a> ·
+        <a href="#" data-act="replay">按绑定版本重放</a> ·
+        <a href="#" data-act="export">导出</a>
+      </div>`;
+    li.querySelector('[data-act=load]').onclick = async (ev) => { ev.preventDefault(); await loadSession(s.session_id); };
+    li.querySelector('[data-act=replay]').onclick = async (ev) => {
+      ev.preventDefault();
+      try {
+        const r = await api("/api/sessions/replay", { session_id: s.session_id });
+        if (r.replay.consistent) toast("重放一致：版本/字节/诊断/树摘要均未变化", "ok");
+        else toast("重放不一致！", "err");
+      } catch (e) { toast(e.message, "err"); }
+    };
+    li.querySelector('[data-act=export]').onclick = async (ev) => {
+      ev.preventDefault();
+      try {
+        const r = await api("/api/sessions/export", { session_id: s.session_id });
+        state.lastExport = r.package;
+        $("exportBox").style.display = "block";
+        $("exportBox").textContent = JSON.stringify(r.package, null, 2);
+        toast("已生成会话包（含版本、字节、诊断、树摘要与 sha256）", "ok");
+      } catch (e) { toast(e.message, "err"); }
+    };
+    ul.appendChild(li);
+  }
+}
+
+function highlightSession(id) {
+  document.querySelectorAll("#sessionList li").forEach((li) => li.classList.toggle("active", li.dataset.id === id));
+}
+
+async function loadSession(id) {
+  const r = await api("/api/sessions/get", { session_id: id });
+  state.currentSession = id;
+  state.selectedVersion = r.session.version_id;
+  state.bytes = parseHex(r.bytes_hex);
+  state.changedBytes = new Set();
+  $("hexInput").value = r.bytes_hex;
+  $("sessionName").value = r.session.name || "";
+  $("sessionNote").value = r.session.note || "";
+  state.parseResult = r.session.result;
+  state.recomputeNodes = new Set();
+  renderVersions(); renderBytes(); renderTree(); renderDiag(); renderSessions();
+  toast("已载入会话（按其创建时绑定的版本呈现）", "ok");
+}
+
+$("btnExport").onclick = async () => {
+  if (!state.currentSession) { toast("请先选择一个会话", "err"); return; }
+  const r = await api("/api/sessions/export", { session_id: state.currentSession });
+  state.lastExport = r.package;
+  $("exportBox").style.display = "block";
+  $("exportBox").textContent = JSON.stringify(r.package, null, 2);
+};
+
+$("btnImport").onclick = () => $("importFile").click();
+$("importFile").onchange = async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const pkg = JSON.parse(text);
+    const r = await api("/api/sessions/import", { package: pkg });
+    toast(`导入完成：版本${r.import.version_reused ? "复用" : "新增"}，blob${r.import.blob_reused ? "指向已有" : "新增"}，会话 ${shortId(r.import.session_id)}`, "ok");
+    await refreshState(true);
+    await loadSession(r.import.session_id);
+  } catch (e) { toast("导入失败：" + e.message, "err"); }
+  ev.target.value = "";
+};
+
+(async function init() {
+  $("specEditor").value = JSON.stringify(DEMO_SPEC, null, 2);
+  try {
+    await refreshState(false);
+    if (state.versions.length) {
+      const last = state.versions[state.versions.length - 1];
+      selectVersion(last.version_id);
+    }
+  } catch (e) {
+    toast("初始化失败：" + e.message, "err");
+  }
+})();
+</script>
+</body>
+</html>

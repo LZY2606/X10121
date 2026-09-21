@@ -1,0 +1,20 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+description = "浏览器里的帧解析实验室：版本化协议描述、字节映射解析树、会话回放与导入导出"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[lib]
+name = "frame_lab"
+path = "src/lib.rs"
+
+[dependencies]
+
+[dev-dependencies]
+
+[profile.release]
+panic = "unwind"
