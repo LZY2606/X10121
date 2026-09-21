@@ -34,3 +34,7 @@ coverage/
 .vite/
 .turbo/
 *.tsbuildinfo
+
+# Frame lab runtime data
+frame-lab-data/
+.smoke_*

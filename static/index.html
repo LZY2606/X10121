@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>帧解析实验室</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>帧解析实验室</h1>
+    <div class="top-actions">
+      <label>协议
+        <select id="protocol-select"></select>
+      </label>
+      <label>版本
+        <select id="version-select"></select>
+      </label>
+      <button id="btn-new-protocol" type="button">新建协议</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel" id="editor-panel">
+      <div class="panel-head">
+        <h2>协议描述</h2>
+        <div class="row">
+          <button id="btn-validate" type="button">校验</button>
+          <button id="btn-save-version" type="button" class="primary">保存不可变版本</button>
+        </div>
+      </div>
+      <input id="version-label" type="text" placeholder="版本标签，例如 v1 add crc" />
+      <textarea id="spec-editor" spellcheck="false" placeholder="在这里编写 JSON 协议描述"></textarea>
+      <div id="spec-feedback" class="feedback"></div>
+      <div id="version-info" class="muted"></div>
+    </section>
+
+    <section class="panel" id="sample-panel">
+      <div class="panel-head">
+        <h2>样本字节</h2>
+        <div class="row">
+          <button id="btn-import-sample" type="button">导入十六进制</button>
+          <button id="btn-save-session" type="button" class="primary">保存会话</button>
+        </div>
+      </div>
+      <textarea id="hex-input" spellcheck="false" placeholder="粘贴十六进制字节流，例如 ef01 03 010203 ..."></textarea>
+      <div class="row">
+        <button id="btn-parse" type="button">重新解析</button>
+        <span id="recalc-banner" class="recalc-hidden"></span>
+      </div>
+      <div id="byte-grid" class="byte-grid" tabindex="0"></div>
+      <div id="byte-detail" class="muted">点击树节点可高亮对应字节；点击字节可编辑该字节。</div>
+    </section>
+
+    <section class="panel" id="tree-panel">
+      <div class="panel-head">
+        <h2>解析树</h2>
+        <div class="row">
+          <button id="btn-expand" type="button">单步展开</button>
+          <button id="btn-expand-all" type="button">全部展开</button>
+          <button id="btn-collapse-all" type="button">收起</button>
+        </div>
+      </div>
+      <div id="status-badge" class="badge">尚未解析</div>
+      <div id="diagnostics"></div>
+      <div id="parse-tree" class="tree"></div>
+    </section>
+
+    <section class="panel" id="session-panel">
+      <div class="panel-head">
+        <h2>会话</h2>
+        <div class="row">
+          <button id="btn-refresh-sessions" type="button">刷新</button>
+          <button id="btn-export" type="button">导出选中</button>
+          <button id="btn-import-bundle" type="button">导入会话包</button>
+        </div>
+      </div>
+      <input id="note-input" type="text" placeholder="当前会话备注" />
+      <table id="session-table">
+        <thead>
+          <tr><th>时间</th><th>协议/版本</th><th>状态</th><th>备注</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="replay-report" class="muted"></div>
+      <textarea id="bundle-io" hidden placeholder="会话包 JSON"></textarea>
+    </section>
+  </main>
+
+  <dialog id="sample-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3>导入十六进制字节流</h3>
+      <textarea id="sample-hex" spellcheck="false"></textarea>
+      <menu>
+        <button value="cancel">取消</button>
+        <button id="sample-confirm" value="confirm" class="primary">导入</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

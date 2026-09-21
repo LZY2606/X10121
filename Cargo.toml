@@ -1,0 +1,19 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+description = "Browser-based frame parsing laboratory with immutable protocol versions"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+
+[profile.release]
+panic = "unwind"
