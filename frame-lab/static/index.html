@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>帧解析实验室</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>帧解析实验室</h1>
+  <div class="subtitle">版本化协议描述 · 字节到解析树映射 · 会话重放</div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="protocols">协议与版本</button>
+  <button class="tab" data-tab="lab">解析实验室</button>
+  <button class="tab" data-tab="sessions">会话</button>
+</nav>
+
+<main>
+  <!-- 协议 -->
+  <section id="tab-protocols" class="tab-panel active">
+    <div class="split">
+      <div class="pane">
+        <h2>协议描述 DSL</h2>
+        <textarea id="dsl-input" spellcheck="false" rows="22"></textarea>
+        <div class="row">
+          <label>名称 <input id="dsl-name" type="text" placeholder="my_protocol"></label>
+          <button id="btn-compile" class="primary">编译检查</button>
+          <button id="btn-save-version">保存为不可变版本</button>
+        </div>
+        <div id="dsl-msg" class="msg"></div>
+      </div>
+      <div class="pane">
+        <h2>已保存版本</h2>
+        <div id="protocol-list" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 实验室 -->
+  <section id="tab-lab" class="tab-panel">
+    <div class="lab-controls">
+      <label>协议版本
+        <select id="version-select"></select>
+      </label>
+      <button id="btn-save-session">存入会话</button>
+      <input id="session-note" type="text" placeholder="会话备注（可独立编辑）">
+      <span id="parse-summary" class="summary"></span>
+    </div>
+    <div class="split lab-split">
+      <div class="pane">
+        <h2>解析树（点击节点高亮字节）</h2>
+        <div class="toolbar">
+          <button id="btn-expand-all">全部展开</button>
+          <button id="btn-collapse-all">全部折叠</button>
+          <label class="chk"><input type="checkbox" id="show-unchanged" checked> 显示未重算节点</label>
+        </div>
+        <div id="tree" class="tree"></div>
+        <div id="diag-box" class="diag"></div>
+      </div>
+      <div class="pane">
+        <h2>字节流（点击可编辑）</h2>
+        <div class="row">
+          <textarea id="hex-input" spellcheck="false" rows="3" placeholder="例如 0100 0a03 ..."></textarea>
+        </div>
+        <div class="row">
+          <button id="btn-parse" class="primary">解析</button>
+          <button id="btn-reset-bytes">重置</button>
+          <span class="hint">改动任意字节后自动重新解析</span>
+        </div>
+        <div id="byte-grid" class="grid"></div>
+        <div id="byte-info" class="msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 会话 -->
+  <section id="tab-sessions" class="tab-panel">
+    <div class="split">
+      <div class="pane">
+        <h2>历史会话（绑定创建时的版本）</h2>
+        <div id="session-list" class="list"></div>
+      </div>
+      <div class="pane">
+        <h2>导入 / 导出</h2>
+        <div class="row">
+          <button id="btn-export-selected">导出选中会话包</button>
+        </div>
+        <div class="row">
+          <input type="file" id="import-file" accept=".json,application/json">
+          <button id="btn-import">导入会话包</button>
+        </div>
+        <div id="replay-box" class="diag"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

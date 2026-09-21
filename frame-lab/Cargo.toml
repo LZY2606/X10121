@@ -1,0 +1,18 @@
+[package]
+name = "frame-lab"
+version = "0.1.0"
+edition = "2021"
+description = "帧解析实验室：版本化协议描述、帧解析/编码、会话持久化与浏览器界面"
+
+[lib]
+name = "framelab"
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame-lab"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+panic = "abort"
