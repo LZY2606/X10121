@@ -1,0 +1,16 @@
+[package]
+name = "frame_lab"
+version = "0.1.0"
+edition = "2021"
+description = "浏览器里的帧解析实验室（零外部依赖）"
+
+[lib]
+name = "frame_lab"
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame_lab"
+path = "src/main.rs"
+
+[profile.release]
+panic = "unwind"

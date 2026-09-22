@@ -34,3 +34,6 @@ coverage/
 .vite/
 .turbo/
 *.tsbuildinfo
+
+# 帧解析实验室运行期仓库
+frame_lab_data/

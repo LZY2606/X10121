@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>帧解析实验室</title>
+<style>
+  :root {
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2740; --line:#2b3656;
+    --text:#e6ebf5; --muted:#8a97b5; --accent:#5aa7ff; --ok:#3ddc84;
+    --warn:#ffc857; --bad:#ff6b6b; --hi:#274472; --hi2:#3560a5;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+         background:var(--bg); color:var(--text); }
+  header { padding:10px 16px; background:linear-gradient(90deg,#14203a,#0f1420);
+           border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; margin:0; letter-spacing:1px; }
+  header .sub { color:var(--muted); font-size:12px; }
+  .layout { display:grid; grid-template-columns:340px 1fr 380px; gap:10px; padding:10px; height:calc(100vh - 46px); }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+           display:flex; flex-direction:column; min-height:0; }
+  .panel h2 { font-size:13px; margin:0; padding:9px 12px; border-bottom:1px solid var(--line);
+              display:flex; justify-content:space-between; align-items:center; }
+  .panel .body { padding:10px 12px; overflow:auto; flex:1; min-height:0; }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--line);
+           border-radius:5px; padding:5px 10px; cursor:pointer; font-size:12px; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+  button.primary { background:#234a85; border-color:#3a6bb5; color:#fff; }
+  button.small { padding:2px 7px; font-size:11px; }
+  input,textarea,select { width:100%; background:#0e1424; color:var(--text);
+           border:1px solid var(--line); border-radius:5px; padding:6px 8px; font-size:12px;
+           font-family:ui-monospace,Menlo,monospace; }
+  textarea { resize:vertical; }
+  label { display:block; color:var(--muted); margin:8px 0 3px; font-size:11px; }
+  .row { display:flex; gap:6px; align-items:center; }
+  .row > * { flex:1; }
+  .row > button { flex:0 0 auto; }
+  .tabs { display:flex; gap:4px; margin-bottom:8px; }
+  .tabs button { flex:1; }
+  .tabs button.on { background:#234a85; color:#fff; border-color:#3a6bb5; }
+  .tree { font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+  .node { padding:1px 0 1px 4px; border-left:2px solid transparent; cursor:pointer; border-radius:3px; white-space:nowrap; }
+  .node:hover { background:var(--panel2); }
+  .node.sel { background:var(--hi); border-left-color:var(--accent); }
+  .node.recomputed { box-shadow: inset 3px 0 0 var(--warn); }
+  .node .tw { display:inline-block; width:14px; color:var(--muted); }
+  .node .kind { color:var(--accent); margin:0 6px; font-size:10px; }
+  .node .val { color:var(--ok); margin-left:6px; }
+  .node .span { color:var(--muted); margin-left:8px; font-size:10px; }
+  .badge { font-size:9px; padding:0 4px; border-radius:3px; margin-left:4px; vertical-align:1px; }
+  .badge.r { background:#5a2a2a; color:#ffb4b4; }
+  .hexgrid { display:flex; flex-wrap:wrap; gap:3px; font-family:ui-monospace,Menlo,monospace; }
+  .hb { width:26px; height:24px; display:flex; align-items:center; justify-content:center;
+        border:1px solid var(--line); border-radius:4px; cursor:pointer; font-size:11px;
+        background:#0e1424; user-select:none; }
+  .hb.hi { background:var(--hi); border-color:var(--accent); }
+  .hb.hi2 { background:var(--hi2); }
+  .hb.bad { border-color:var(--bad); }
+  .hb.recomp { box-shadow: inset 0 0 0 2px var(--warn); }
+  .hb.edit { background:#4a3a1e; border-color:var(--warn); }
+  .status { padding:8px 12px; border-radius:6px; margin-bottom:8px; font-size:12px; }
+  .status.ok { background:#153025; border:1px solid #2c6b4c; }
+  .status.incomplete { background:#33290f; border:1px solid #7a5f1e; }
+  .status.violation { background:#3a1717; border:1px solid #7a2f2f; }
+  .muted { color:var(--muted); }
+  .err { background:#2a1414; border:1px solid #6e2e2e; border-radius:6px; padding:8px; margin-top:8px; }
+  .warnline { background:#2c2410; border:1px solid #6e5a24; border-radius:5px; padding:5px 8px; margin:4px 0; font-size:11px; }
+  .item { padding:7px 8px; border:1px solid var(--line); border-radius:6px; margin-bottom:6px; cursor:pointer; }
+  .item:hover { border-color:var(--accent); }
+  .item .t { font-weight:600; }
+  .item .m { color:var(--muted); font-size:11px; }
+  .pill { display:inline-block; font-size:10px; padding:1px 6px; border-radius:8px; background:var(--panel2); }
+  .pill.ok { color:var(--ok); } .pill.incomplete { color:var(--warn); } .pill.violation { color:var(--bad); }
+  .legend { display:flex; gap:10px; flex-wrap:wrap; font-size:10px; color:var(--muted); margin:6px 0; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:3px; }
+  details summary { cursor:pointer; color:var(--muted); font-size:11px; margin:4px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>帧解析实验室</h1>
+  <span class="sub">协议版本不可变 · 字节↔解析树映射 · incomplete / violation 严格区分 · 会话可回看</span>
+  <span style="flex:1"></span>
+  <button class="small" id="btnLoadDemo">载入演示样本</button>
+</header>
+
+<div class="layout">
+  <!-- 左：协议与版本 -->
+  <section class="panel">
+    <h2>协议描述与版本
+      <span class="row" style="gap:4px">
+        <button class="small" id="btnNewProtocol">新建协议</button>
+      </span>
+    </h2>
+    <div class="body">
+      <label>已保存协议</label>
+      <select id="protocolSelect"></select>
+      <div class="tabs" style="margin-top:8px">
+        <button id="tabEdit" class="on">编辑描述</button>
+        <button id="tabVersions">版本历史</button>
+      </div>
+      <div id="paneEdit">
+        <label>协议名称</label>
+        <input id="protoName" />
+        <label>协议描述（JSON）</label>
+        <textarea id="protoSpec" rows="18" spellcheck="false"></textarea>
+        <label>版本说明</label>
+        <input id="versionNote" placeholder="本次修订说明" />
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="btnSaveVersion">保存为新版本</button>
+          <button id="btnValidate">仅校验</button>
+        </div>
+        <div id="protoMsg" class="muted" style="margin-top:6px"></div>
+      </div>
+      <div id="paneVersions" style="display:none">
+        <div id="versionList"></div>
+        <div class="muted" style="margin-top:6px">
+          历史会话始终按创建时绑定的版本重放，新版本不会改变旧结论。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 中：解析树 + 字节 -->
+  <section class="panel">
+    <h2>解析树与字节覆盖
+      <span class="row" style="gap:4px">
+        <button class="small" id="btnStepExpand">单步展开</button>
+        <button class="small" id="btnCollapse">全部折叠</button>
+      </span>
+    </h2>
+    <div class="body">
+      <div id="statusBox"></div>
+      <div class="legend">
+        <span><i style="background:var(--hi)"></i>选中节点覆盖</span>
+        <span><i style="background:#4a3a1e;border-color:var(--warn)"></i>已改动字节</span>
+        <span><i style="background:#2c2410"></i>重新计算节点</span>
+      </div>
+      <div class="tree" id="tree" style="margin-bottom:10px"></div>
+      <label>字节视图（点击字节可直接改写，失焦/回车后重新解析）</label>
+      <div class="hexgrid" id="hexgrid"></div>
+      <div id="byteInfo" class="muted" style="margin-top:6px"></div>
+      <div id="errorBox"></div>
+      <div id="warnBox"></div>
+    </div>
+  </section>
+
+  <!-- 右：样本 / 会话 -->
+  <section class="panel">
+    <h2>样本预会话
+      <span class="row" style="gap:4px">
+        <button class="small" id="btnExport">导出会话包</button>
+        <button class="small" id="btnImportFile">导入会话包</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none" />
+      </span>
+    </h2>
+    <div class="body">
+      <div class="tabs">
+        <button id="tabSample" class="on">导入/解析</button>
+        <button id="tabSessions">会话列表</button>
+      </div>
+      <div id="paneSample">
+        <label>绑定协议版本</label>
+        <div class="row">
+          <select id="sampleProtocol" style="flex:2"></select>
+          <select id="sampleVersion" style="flex:1"></select>
+        </div>
+        <label>十六进制字节流（允许空格 / 换行 / 0x 前缀）</label>
+        <textarea id="hexInput" rows="6" spellcheck="false" placeholder="aa 00 13 02 ..."></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="btnParse">解析</button>
+          <button id="btnSaveSession">存为会话</button>
+        </div>
+        <label>会话标题</label>
+        <input id="sessionTitle" placeholder="未命名会话" />
+        <label>备注（与其它会话相互独立）</label>
+        <textarea id="sessionNote" rows="2"></textarea>
+        <div id="currentSession" class="muted" style="margin-top:8px"></div>
+      </div>
+      <div id="paneSessions" style="display:none">
+        <div id="sessionList"></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

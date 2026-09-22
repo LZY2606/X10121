@@ -1,0 +1,12 @@
+//! 帧解析实验室：零外部依赖的协议帧解析/编码/持久化/HTTP 服务库。
+pub mod api;
+pub mod demo;
+pub mod encoder;
+pub mod hash;
+pub mod hexutil;
+pub mod json;
+pub mod model;
+pub mod parser;
+pub mod server;
+pub mod spec;
+pub mod storage;

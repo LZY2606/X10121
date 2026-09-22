@@ -1,0 +1,71 @@
+{
+  "name": "演示设备帧 DemoFrame v1",
+  "root": "frame",
+  "max_depth": 8,
+  "structs": [
+    {
+      "name": "frame",
+      "length_ref": { "field": "frame_len" },
+      "fields": [
+        { "name": "soi", "type": "u8", "const": 170 },
+        {
+          "name": "frame_len",
+          "type": "u16",
+          "endian": "be",
+          "enum": [
+            { "value": 11, "label": "心跳" },
+            { "value": 19, "label": "数据帧" }
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "u8",
+          "enum": [
+            { "value": 1, "label": "心跳" },
+            { "value": 2, "label": "数据" }
+          ]
+        },
+        { "name": "seq", "type": "u16", "endian": "le" },
+        { "name": "body", "type": "struct", "struct": "body" },
+        {
+          "name": "chk",
+          "type": "u8",
+          "checksum": { "algo": "sum8", "covers": ["soi", "@end"], "skip_self": true }
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "length_ref": { "field": "clen", "offset": 0 },
+      "fields": [
+        { "name": "clen", "type": "u16", "endian": "be" },
+        { "name": "payload", "type": "bytes", "length": 3 },
+        {
+          "name": "tail",
+          "type": "struct",
+          "struct": "tail",
+          "when": { "field": "kind", "eq": 2 }
+        },
+        { "name": "node", "type": "struct", "struct": "node" }
+      ]
+    },
+    {
+      "name": "tail",
+      "fields": [{ "name": "marker", "type": "u8", "const": 205 }]
+    },
+    {
+      "name": "node",
+      "fields": [
+        { "name": "ntype", "type": "u8" },
+        { "name": "nlen", "type": "u8" },
+        { "name": "nval", "type": "bytes", "length": "nlen" },
+        {
+          "name": "child",
+          "type": "struct",
+          "struct": "node",
+          "when": { "field": "ntype", "eq": 1 }
+        }
+      ]
+    }
+  ]
+}
